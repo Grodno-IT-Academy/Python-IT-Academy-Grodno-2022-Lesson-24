@@ -1,54 +1,19 @@
-# Please remember to rename django_heroku to your project directory name
-FROM nginxinc/nginx-unprivileged:1-alpine
+FROM python:3.10-slim
 
-COPY ./default.conf /etc/nginx/conf.d/default.conf
-COPY ./uwsgi_params /etc/nginx/uwsgi_params
+ENV PYTHONUNBUFFERED 1
+ENV DEBUG 1
 
-USER root
+#upgrading pip for python
+RUN python -m pip install --upgrade pip
 
-RUN mkdir -p /vol/static
-RUN chmod 755 /vol/static
+#copying requirements.txt file
+COPY ./requirements.txt /app/requirements.txt
 
-USER nginx
+#install those requirements before copying the project
+RUN pip install -r /app/requirements.txt
 
-
-
-#################################################################################
-FROM python:3.10-slim-buster
-
-WORKDIR /app
-
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    DJANGO_SETTINGS_MODULE=src.settings \
-    PORT=8000 \
-    WEB_CONCURRENCY=3
-
-# Install system packages required by Wagtail and Django.
-RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-recommends \
-    build-essential curl \
-    libpq-dev \
-    libmariadbclient-dev \
-    libjpeg62-turbo-dev \
-    zlib1g-dev \
-    libwebp-dev \
- && rm -rf /var/lib/apt/lists/*
-
-RUN addgroup --system django \
-    && adduser --system --ingroup django django
-
-# Requirements are installed here to ensure they will be cached.
-COPY ./requirements.txt /requirements.txt
-RUN pip install -r /requirements.txt
-
-# Copy project code
+#copy the project
 COPY ./demo .
 
-RUN python manage.py collectstatic --noinput --clear
-
-# Run as non-root user
-RUN chown -R django:django /app
-USER django
-
-# Run application
-CMD gunicorn src.wsgi:application
+#run gunicorn. here pdfconverter is the project name
+CMD gunicorn -b 0.0.0.0:$PORT src.wsgi:application
