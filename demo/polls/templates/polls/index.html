@@ -3,6 +3,7 @@
 {% block Body %}
 {% if questions_list %}
   <ul>
+    {%  include 'polls/pagination.html' with page=page_obj %}
     {% for question in questions_list %}
       <li>
         <a href="{% url 'polls:detail' question.id %}">
@@ -18,6 +19,7 @@
           {% endif %}
       </li>
     {% endfor %}
+    {%  include 'polls/pagination.html' with page=page_obj %}
   </ul>
 {% else %}
   <p>No polls avaliable.</p>

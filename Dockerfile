@@ -1,30 +1,54 @@
-FROM python:3.10-alpine
+# Please remember to rename django_heroku to your project directory name
+FROM nginxinc/nginx-unprivileged:1-alpine
 
-ENV PATH="/scripts:${PATH}"
+COPY ./default.conf /etc/nginx/conf.d/default.conf
+COPY ./uwsgi_params /etc/nginx/uwsgi_params
 
-COPY requirements.txt /requirements.txt
+USER root
 
-RUN apk update && apk add  --no-cache postgresql-dev gcc python3-dev musl-dev postgresql postgresql-contrib
-RUN apk add --update --no-cache --virtual .tmp libc-dev linux-headers
-RUN pip install -r /requirements.txt
-RUN apk del .tmp
+RUN mkdir -p /vol/static
+RUN chmod 755 /vol/static
 
-RUN mkdir app
-COPY ./demo /app
+USER nginx
+
+
+
+#################################################################################
+FROM python:3.10-slim-buster
 
 WORKDIR /app
 
-COPY ./scripts /scripts
-RUN chmod +x /scripts/*
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    DJANGO_SETTINGS_MODULE=src.settings \
+    PORT=8000 \
+    WEB_CONCURRENCY=3
 
-RUN mkdir -p /vol/web/media
-RUN mkdir -p /vol/web/static
+# Install system packages required by Wagtail and Django.
+RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-recommends \
+    build-essential curl \
+    libpq-dev \
+    libmariadbclient-dev \
+    libjpeg62-turbo-dev \
+    zlib1g-dev \
+    libwebp-dev \
+ && rm -rf /var/lib/apt/lists/*
 
-RUN adduser -D user
-RUN chown -R user:user /vol
-RUN chmod -R 755 /vol/web
+RUN addgroup --system django \
+    && adduser --system --ingroup django django
 
-USER user
+# Requirements are installed here to ensure they will be cached.
+COPY ./requirements.txt /requirements.txt
+RUN pip install -r /requirements.txt
 
+# Copy project code
+COPY ./demo .
 
-CMD ["entrypoint.sh"]
+RUN python manage.py collectstatic --noinput --clear
+
+# Run as non-root user
+RUN chown -R django:django /app
+USER django
+
+# Run application
+CMD gunicorn src.wsgi:application

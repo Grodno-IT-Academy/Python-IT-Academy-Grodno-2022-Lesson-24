@@ -40,10 +40,10 @@ def question_search(request):
 
 # Create your views here.
 class IndexView(generic.ListView):
+    paginate_by = 10
     template_name = 'polls/index.html'
     context_object_name = 'questions_list'
-    def get_queryset(self):
-        return Question.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')[:5]
+    queryset = Question.objects.filter(pub_date__lte=timezone.now()).order_by('pub_date')
 #create question view
 
 @method_decorator(allowed_users(allowed_roles=['customer']), name='dispatch')
