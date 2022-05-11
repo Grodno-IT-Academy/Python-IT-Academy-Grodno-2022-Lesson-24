@@ -4,12 +4,39 @@ from django.urls import reverse_lazy, reverse
 from django.views import generic
 from .models import Question, Choice
 from django.utils import timezone
-from .forms import ChoiceForm, QuestionForm
+from .forms import ChoiceForm, QuestionForm, SarchForm
 #limiting user view for users not logged in
 from django.contrib.auth.decorators import login_required
 from django.forms.models import inlineformset_factory
 from django.utils.decorators import method_decorator
 from authentication.decorators import allowed_users
+# search vector for search
+from django.contrib.postgres.search import SearchVector
+# pagination
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+# search
+def question_search(request):
+    form = SarchForm()
+    query = None
+    results = []
+    paginator = Paginator(results, 10)
+    page = request.GET.get('page') or 1
+    if 'query' in request.GET:
+        form = SarchForm(request.GET)
+        if form.is_valid():
+            query = form.cleaned_data['query']
+            search_vector = SearchVector('question_text', 'pub_date', 'author__username')
+            results = Question.objects.annotate(search=search_vector).filter(search=query)
+            paginator = Paginator(results, 10)
+            page = request.GET.get('page') or 1
+            try:
+                results = paginator.page(page)
+            except PageNotAnInteger:
+                results = paginator.page(1)
+            except EmptyPage:
+                results = paginator.page(paginator.num_pages)
+    return render(request, 'polls/search.html', {'page':page, 'form': form, 'query': query, 'results': results})
 
 # Create your views here.
 class IndexView(generic.ListView):

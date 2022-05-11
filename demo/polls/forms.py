@@ -1,4 +1,4 @@
-from django.forms import ModelForm
+from django.forms import ModelForm, Form, CharField
 from .models import Question, Choice
 
 class QuestionForm(ModelForm):
@@ -10,3 +10,6 @@ class ChoiceForm(ModelForm):
     class Meta:
         model = Choice
         fields = ['choice_text']
+
+class SarchForm(Form):
+    query = CharField()

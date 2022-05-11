@@ -32,6 +32,10 @@
                 <a class="nav-link" href="{% url 'auth:reg' %}">Register</a>
             </li>
         {% endif %}
+          <form class="d-flex" action="{% url 'polls:search' %}" method="get">
+            <input type="text" class="form-control me-2" name="query" placeholder="search" value="{{ query }}" />
+            <input type="submit" class="btn btn-outline-success" value="Search" />
+        </form>
       </ul>
     </div>
   </div>

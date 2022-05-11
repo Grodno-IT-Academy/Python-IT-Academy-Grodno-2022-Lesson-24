@@ -1,0 +1,27 @@
+{% extends 'polls/base.html' %}
+{% block title %}Sarch Polls{% endblock %}
+{% block Body %}
+    <h1>Search Polls</h1>
+    <form class="d-flex" action="{% url 'polls:search' %}" method="get">
+        <input type="text" class="form-control me-2" name="query" placeholder="search" value="{{ query }}" />
+        <input type="submit" class="btn btn-outline-success" value="Search" />
+    </form>
+
+    {% if query %}
+        <h2>Search Results for '{{ query }}'</h2>
+        <h3>
+            {% with results.count as total_results %}
+                Found {{ total_results }} result{{ total_results|pluralize }}
+            {% endwith %}
+        </h3>
+        {%  include 'polls/pagination.html' with page=results query=query %}
+        {% for poll in results %}
+            <h4><a href="{% url 'polls:detail' poll.id %}">{{ poll.question_text }}</a></h4>
+        {% empty %}
+            <p>No polls found matching '{{ query }}'</p>
+        {% endfor %}
+        {%  include 'polls/pagination.html' with page=results %}
+{#        <p><a href="{% url 'polls:search' %}">Search Again</a></p>#}
+    {% endif %}
+
+{% endblock %}

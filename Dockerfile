@@ -4,7 +4,7 @@ ENV PATH="/scripts:${PATH}"
 
 COPY requirements.txt /requirements.txt
 
-RUN apk update && apk add  --no-cache postgresql-dev gcc python3-dev musl-dev
+RUN apk update && apk add  --no-cache postgresql-dev gcc python3-dev musl-dev postgresql postgresql-contrib
 RUN apk add --update --no-cache --virtual .tmp libc-dev linux-headers
 RUN pip install -r /requirements.txt
 RUN apk del .tmp

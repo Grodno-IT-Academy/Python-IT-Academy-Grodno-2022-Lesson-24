@@ -14,4 +14,5 @@ urlpatterns = [
     path('details/<int:pk>/', view=login_required(views.DetailView.as_view(), login_url=reverse_lazy('auth:login')), name='detail'),
     path('polls/<int:pk>/results/', view=login_required(views.ResultsView.as_view(), login_url=reverse_lazy('auth:login')), name='results'),
     path('polls/<int:question_id>/vote/', view=views.vote, name='vote'),
+    path('search/', view=views.question_search, name='search'),
 ]
